@@ -1,0 +1,140 @@
+= Resourcelogic
+
+**Beta warning: right now this plugin is in what I like to call a "semi-beta". The only thing left to do is write documentation and add in the tests. I have already thoroughly tested this in a separate application, and am in the process of moving over the tests without having to pull over the entire rails application.**
+
+The purpose of Resourcelogic is to support a development style I created called "Contextual Development". It's a twist on the RESTful development style that allows APIs and generals web apps to be one in the same. This is an idea I've had for a while and finally decided to give it a try on one of my project.
+
+This library spawned out of the [resource_controller plugin](http://github.com/giraffesoft/resource_controller) by James Gollick, which is an excellent plugin. I eventually made so many changes to it that it made more sense to rewrite my own.
+
+== Helpful links
+
+Coming soon...(docs, tutorial, and sample app)
+
+== Contextual Development
+
+The idea behind contextual development is simple: **an API should be a be a byproduct of good design**. Meaning you should never have to explicitly build an API, it should be an "accident".
+
+I know that this is the reason for using respond_to, but if you are building an interface, this just isn't enough.
+
+Let me illustrate my point. A lot of people like to do the following:
+
+1. /comments => CommentsController
+2. /admin/comments => Admin::CommentController
+
+Set the interface aside and pretend you are building an API, would you have both controllers? No. There would no reason to. The reason people do the above is to give them some kind of "flag". They use this flag to control scope and/or interface differences. Here is what's wrong with the above:
+
+1. You have 2 controllers handling access to a single resource
+2. You are duplicating logic across multiple controllers.
+3. Scope should be controlled by state, not by context. If they are an admin, who cares where they manage comments? Just because they aren't in the "admin" area doesn't mean you have to block them from doing administrative tasks in the non-admin areas. There's no security risk. For example, if the user fires up the console and sends a DELETE request to comments/2, so what, they could send a DELETE request to admin/comments/2 and accomplish the same thing. More importantly, from an API standpoint, it makes no sense to do this.
+
+Contextual development cuts out all of this non sense by telling you what **context** you are in. So instead of having 2 comments controller you have 1, and you can use the **context** method to do whatever you want. Example:
+
+  class CommentsController < ApplicationController
+    acts_as_resource      # implements "contextual" development
+    contextual_views true # more on this in the docs
+    layout :layout_by_context
+    
+    private
+      def layout_by_context
+        case context
+        when :admin
+         "admin"
+        else
+         "application"
+        end
+      end
+      
+      def end_of_association_chain
+        @end_of_association_chain ||= current_user.admin? ? Comment : current_user.comments
+      end
+  end
+
+Your routes should look something like:
+
+  map.with_options(:path_prefix => "admin", :name_prefix => "admin_") do |admin|
+    admin.resources :comments
+  end
+  map.resources :comments
+
+Both routes are pointing to the same controller: CommentsController. Why is this so great?
+
+1. You have a single controller where *ALL* requests that are dealing with comments pass through, regardless of where they are in the application. This allows you to easily keep controller logic DRY. For example, what if you wanted to store the IP address of the person creating the comment? You *HAVE* to do this in the controller, and now you can do that in one spot, not two.
+2. Your views are flexible as you want. You can share views across contexts or you can separate them out. More importantly, all of your views relating to comments are in the views/comments folder and no where else. That's what the "contextual_views" method is all about. See contextual_views in the docs for more details.
+
+== Install and use
+
+=== 1. Install the gem
+
+Install the gem / plugin (recommended)
+
+  $ sudo gem install resourcelogic
+
+Now add the gem dependency in your config:
+
+  # config/environment.rb
+  config.gem "resourcelogic"
+
+Or you install this as a plugin (for older versions of rails)
+
+  script/plugin install git://github.com/binarylogic/resourcelogic.git
+
+=== 2. Create your ResourceController
+
+  script/generate controller resource
+
+Your ResourceController should look something like:
+
+  class ResourceController < ApplicationController
+    acts_as_resource
+  end
+
+Now all of your controllers that are "resources" can extend this controller. Why do this? So you can set your default behavior for resources in one spot. This idea what brought over from the resource_controller plugin. The syntax resource_controller came up with is pretty cool:
+
+  class ResourceController < ApplicationController
+    acts_as_resource
+    
+    create.flash { # code to evaluate to create the flash message for a successful create }
+    create.before { # code you want to execute before the create action }
+    create.wants.js { # code you want to execute in the wants.js for a successful create }
+    create.failure.flash { # code to evaluate to create the flash message for an unsuccessful create }
+    create.failure.js { # code you want to execute in the wants.js for an unsuccessful create }
+    # etc...See Resourcelogic::ActionOptions and Resourcelogic::FailableActionOptions for more details
+  end
+
+All of these are overrideable, meaning your subclasses can change behavior in a granular manner, and preserve the defaults where necessary.
+  
+== Feature highlights
+
+I don't want to repeat what is already in the documentation, but there are a lot of really nice configuration and utility methods. Here are just a few:
+
+**Class level methods**
+
+  belongs_to :relationship_name   # will check to see if the resource is being scoped by a parent and give you some nifty methods for this (see below). You can call this multiple times. Just like ActiveRecord.
+  contextual_views true           # will split up your views into subfolders: comments/context1, comments/context2, and will change your default view path to the respecive folder
+
+**Instance level methods**
+
+  context                                 # the name of the context you are in
+  
+  object                                  # current object
+  collection                              # current collection
+  object_path                             # /comments/:id
+  new_object_path                         # /comments/new
+  collection_path                         # /comments
+  
+  parent                                  # current parent object
+  parent_path                             # /parent_name/:parent_id
+  parent_collection_path                  # /parent_name
+  new_parent_path                         # /parent_name/new
+  
+  sibling_path(sibling)                   # /sibling_name/:id
+  new_sibling_path(:sibling_name)         # /sibling_name/new
+  sibling_collection_path(:sibling_name)  # /sibling_name
+  
+  child_path(child)                       # /sibling_name/:id
+  new_child_path(:child_name)             # /sibling_name/new
+  child_collection_path(:child_name)      # /sibling_name
+  
+All of the above can end with _url instead of _path. See docs for a complete list of available methods.
+
+Copyright (c) 2008 Ben Johnson of [Binary Logic](http://www.binarylogic.com), released under the MIT license
