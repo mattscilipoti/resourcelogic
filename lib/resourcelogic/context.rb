@@ -58,6 +58,7 @@ module Resourcelogic
         
         def context_template_name(name)
           sub_folder = contextual_views.is_a?(Hash) && contextual_views.key?(context) ? contextual_views[context] : context
+          sub_folder ||= "root"
           "#{controller_name}/#{sub_folder}/#{name}"
         end
         

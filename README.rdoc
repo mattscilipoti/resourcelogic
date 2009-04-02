@@ -1,65 +1,26 @@
 = Resourcelogic
 
-**Beta warning: right now this plugin is in what I like to call a "semi-beta". The only thing left to do is write documentation and add in the tests. I have already thoroughly tested this in a separate application, and am in the process of moving over the tests without having to pull over the entire rails application.**
+*Beta warning: right now this plugin is in what I like to call a "semi-beta". The only thing left to do is write documentation and add in the tests. I have already thoroughly tested this in a separate application, and am in the process of moving over the tests without having to pull over the entire rails application.*
 
-The purpose of Resourcelogic is to support a development style I created called "Contextual Development". It's a twist on the RESTful development style that allows APIs and generals web apps to be one in the same. This is an idea I've had for a while and finally decided to give it a try on one of my project.
-
-This library spawned out of the [resource_controller plugin](http://github.com/giraffesoft/resource_controller) by James Gollick, which is an excellent plugin. I eventually made so many changes to it that it made more sense to rewrite my own.
+The purpose of Resourcelogic is to support a development style I created called "Contextual Development" (see contextual development below). This is an idea I've had for a while and finally decided to give it a try on one of my projects. This library spawned out of the {resource_controller plugin}(http://github.com/giraffesoft/resource_controller) by James Gollick, which is an excellent plugin. I eventually made so many changes to it that it made more sense to rewrite my own.
 
 == Helpful links
 
-Coming soon...(docs, tutorial, and sample app)
+*	<b>Documentation:</b> http://resourcelogic.rubyforge.org
 
 == Contextual Development
 
-The idea behind contextual development is simple: **an API should be a be a byproduct of good design**. Meaning you should never have to explicitly build an API, it should be an "accident".
+The idea behind contextual development is simple: *an API should be a be a byproduct of good design*. Meaning you should never have to explicitly build an API, it should be an "accident".
 
-I know that this is the reason for using respond_to, but if you are building an interface, this just isn't enough.
+Your interface should not dictate the structure of your controllers. Instead, your controllers should represent a collection of resources that your interface can use. The problem is that rails does so much magic, and makes so many assumptions, that sometimes it distorts the basics behind the MVC pattern.
 
-Let me illustrate my point. A lot of people like to do the following:
+This becomes very clear when you try build an interface with {Flex}[http://www.adobe.com/products/flex/]. What this forces you to do is separate your interface from your application. A flex interface communicates with your application via XML. So when you finish an app with a Flex interface you all of a sudden have a "production ready" API as well. Which feels really good. A proper API is the foundation for growing your application. Once this is done the sky is the limit.
 
-1. /comments => CommentsController
-2. /admin/comments => Admin::CommentController
+That being said, why can't we accomplish the same thing with an HTML interface? For one, an HTML interface isn't as cleanly decoupled from the controllers as a Flex interface. For two, rails doesn't give us all of the tools to properly accomplish this. Instead, people create work-arounds by namespacing controllers to represent context and scope. Instead, why not have a single controller that is *context aware*. Hence the name *"Contextual Development"*.
 
-Set the interface aside and pretend you are building an API, would you have both controllers? No. There would no reason to. The reason people do the above is to give them some kind of "flag". They use this flag to control scope and/or interface differences. Here is what's wrong with the above:
+This is great because now you have a single controller that *every* request for the resource must pass through. In the same manner that all database activity passes through ORM models. You can feel confident adding controller specific logic to that resource without having to worry about duplicating it across multiple controllers. Ex: storing the user's IP address with a record.
 
-1. You have 2 controllers handling access to a single resource
-2. You are duplicating logic across multiple controllers.
-3. Scope should be controlled by state, not by context. If they are an admin, who cares where they manage comments? Just because they aren't in the "admin" area doesn't mean you have to block them from doing administrative tasks in the non-admin areas. There's no security risk. For example, if the user fires up the console and sends a DELETE request to comments/2, so what, they could send a DELETE request to admin/comments/2 and accomplish the same thing. More importantly, from an API standpoint, it makes no sense to do this.
-
-Contextual development cuts out all of this non sense by telling you what **context** you are in. So instead of having 2 comments controller you have 1, and you can use the **context** method to do whatever you want. Example:
-
-  class CommentsController < ApplicationController
-    acts_as_resource      # implements "contextual" development
-    contextual_views true # more on this in the docs
-    layout :layout_by_context
-    
-    private
-      def layout_by_context
-        case context
-        when :admin
-         "admin"
-        else
-         "application"
-        end
-      end
-      
-      def end_of_association_chain
-        @end_of_association_chain ||= current_user.admin? ? Comment : current_user.comments
-      end
-  end
-
-Your routes should look something like:
-
-  map.with_options(:path_prefix => "admin", :name_prefix => "admin_") do |admin|
-    admin.resources :comments
-  end
-  map.resources :comments
-
-Both routes are pointing to the same controller: CommentsController. Why is this so great?
-
-1. You have a single controller where *ALL* requests that are dealing with comments pass through, regardless of where they are in the application. This allows you to easily keep controller logic DRY. For example, what if you wanted to store the IP address of the person creating the comment? You *HAVE* to do this in the controller, and now you can do that in one spot, not two.
-2. Your views are flexible as you want. You can share views across contexts or you can separate them out. More importantly, all of your views relating to comments are in the views/comments folder and no where else. That's what the "contextual_views" method is all about. See contextual_views in the docs for more details.
+If it is any consolation, I am speaking from experience. I recently finished a very complex project using this method and I can say, without a doubt, it's the cleanest application I've built to date.
 
 == Install and use
 
@@ -102,17 +63,51 @@ Now all of your controllers that are "resources" can extend this controller. Why
   end
 
 All of these are overrideable, meaning your subclasses can change behavior in a granular manner, and preserve the defaults where necessary.
-  
+
+=== 3. Make sure you don't namespace your controllers
+
+Instead of namespacing your controllers, give them context. For example, let's say you you have /commments and /admin/comments. This controller has 2 contexts: root and admin. So your routes should look something like:
+
+  map.with_options(:path_prefix => "admin", :name_prefix => "admin_") do |admin|
+    admin.resource :comments
+  end
+  map.resources :comments
+
+Then in your controller use the context method to make adjustments:
+
+  class CommentsController < ResourceController
+    layout :layout_by_context
+    
+    private
+      def layout_by_context
+        case context
+        when :admin
+          "admin"
+        else
+          "application"
+        end
+      end
+  end
+
+You also have the same context method in your views. Lastly, if you feel your views are getting cluttered you can use the contextual_views option (See Resourcelogic::Context::Config for more info). This will change your default view path to a context subfolder. Ex:
+
+  /comments
+    /admin
+    /root
+    any other contexts..
+
+See the Feature Highlights section below for more options, and the documentation for a complete list.
+
 == Feature highlights
 
 I don't want to repeat what is already in the documentation, but there are a lot of really nice configuration and utility methods. Here are just a few:
 
-**Class level methods**
+*Class level methods*
 
   belongs_to :relationship_name   # will check to see if the resource is being scoped by a parent and give you some nifty methods for this (see below). You can call this multiple times. Just like ActiveRecord.
   contextual_views true           # will split up your views into subfolders: comments/context1, comments/context2, and will change your default view path to the respecive folder
 
-**Instance level methods**
+*Instance level methods*
 
   context                                 # the name of the context you are in
   
@@ -137,4 +132,4 @@ I don't want to repeat what is already in the documentation, but there are a lot
   
 All of the above can end with _url instead of _path. See docs for a complete list of available methods.
 
-Copyright (c) 2008 Ben Johnson of [Binary Logic](http://www.binarylogic.com), released under the MIT license
+Copyright (c) 2008 {Ben Johnson of Binary Logic}(http://www.binarylogic.com), released under the MIT license
