@@ -1,6 +1,6 @@
 = Resourcelogic
 
-*Beta warning: right now this plugin is in what I like to call a "semi-beta". The only thing left to do is write documentation and add in the tests. I have already thoroughly tested this in a separate application, and am in the process of moving over the tests without having to pull over the entire rails application.*
+<b>Beta warning: right now this plugin is in what I like to call a "semi-beta". The only thing left to do is write documentation and add in the tests. I have already thoroughly tested this in a separate application, and am in the process of moving over the tests without having to pull over the entire rails application.</b>
 
 The purpose of Resourcelogic is to support a development style I created called "Contextual Development" (see contextual development below). This is an idea I've had for a while and finally decided to give it a try on one of my projects. This library spawned out of the {resource_controller plugin}(http://github.com/giraffesoft/resource_controller) by James Gollick, which is an excellent plugin. I eventually made so many changes to it that it made more sense to rewrite my own.
 
@@ -10,15 +10,15 @@ The purpose of Resourcelogic is to support a development style I created called 
 
 == Contextual Development
 
-The idea behind contextual development is simple: *an API should be a be a byproduct of good design*. Meaning you should never have to explicitly build an API, it should be an "accident".
+The idea behind contextual development is simple: <b>an API should be a be a byproduct of good design</b>. Meaning you should never have to explicitly build an API, it should be an "accident".
 
 Your interface should not dictate the structure of your controllers. Instead, your controllers should represent a collection of resources that your interface can use. The problem is that rails does so much magic, and makes so many assumptions, that sometimes it distorts the basics behind the MVC pattern.
 
 This becomes very clear when you try build an interface with {Flex}[http://www.adobe.com/products/flex/]. What this forces you to do is separate your interface from your application. A flex interface communicates with your application via XML. So when you finish an app with a Flex interface you all of a sudden have a "production ready" API as well. Which feels really good. A proper API is the foundation for growing your application. Once this is done the sky is the limit.
 
-That being said, why can't we accomplish the same thing with an HTML interface? For one, an HTML interface isn't as cleanly decoupled from the controllers as a Flex interface. For two, rails doesn't give us all of the tools to properly accomplish this. Instead, people create work-arounds by namespacing controllers to represent context and scope. Instead, why not have a single controller that is *context aware*. Hence the name *"Contextual Development"*.
+That being said, why can't we accomplish the same thing with an HTML interface? For one, an HTML interface isn't as cleanly decoupled from the controllers as a Flex interface. For two, rails doesn't give us all of the tools to properly accomplish this. Instead, people create work-arounds by namespacing controllers to represent context and scope. Instead, why not have a single controller that is <b>context aware</b>. Hence the name <b>"Contextual Development"</b>.
 
-This is great because now you have a single controller that *every* request for the resource must pass through. In the same manner that all database activity passes through ORM models. You can feel confident adding controller specific logic to that resource without having to worry about duplicating it across multiple controllers. Ex: storing the user's IP address with a record.
+This is great because now you have a single controller that <b>every</b> request for the resource must pass through. In the same manner that all database activity passes through ORM models. You can feel confident adding controller specific logic to that resource without having to worry about duplicating it across multiple controllers. Ex: storing the user's IP address with a record.
 
 If it is any consolation, I am speaking from experience. I recently finished a very complex project using this method and I can say, without a doubt, it's the cleanest application I've built to date.
 
@@ -102,12 +102,12 @@ See the Feature Highlights section below for more options, and the documentation
 
 I don't want to repeat what is already in the documentation, but there are a lot of really nice configuration and utility methods. Here are just a few:
 
-*Class level methods*
+<b>Class level methods</b>
 
   belongs_to :relationship_name   # will check to see if the resource is being scoped by a parent and give you some nifty methods for this (see below). You can call this multiple times. Just like ActiveRecord.
   contextual_views true           # will split up your views into subfolders: comments/context1, comments/context2, and will change your default view path to the respecive folder
 
-*Instance level methods*
+<b>Instance level methods</b>
 
   context                                 # the name of the context you are in
   

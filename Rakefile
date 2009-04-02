@@ -2,7 +2,7 @@ ENV['RDOCOPT'] = "-S -f html -T hanna"
 
 require "rubygems"
 require "hoe"
-require File.dirname(__FILE__) << "/lib/authlogic/version"
+require File.dirname(__FILE__) << "/lib/resourcelogic/version"
 
 Hoe.new("Resourcelogic", Resourcelogic::Version::STRING) do |p|
   p.name = "resourcelogic"
