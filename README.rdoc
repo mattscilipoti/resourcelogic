@@ -7,18 +7,21 @@ The purpose of Resourcelogic is to support a development style I created called 
 == Helpful links
 
 *	<b>Documentation:</b> http://resourcelogic.rubyforge.org
+* <b>Bugs / feature suggestions:</b> http://binarylogic.lighthouseapp.com/projects/28581-resourcelogic
 
 == Contextual Development
 
 The idea behind contextual development is simple: <b>an API should be a be a byproduct of good design</b>. Meaning you should never have to explicitly build an API, it should be an "accident".
 
-Your interface should not dictate the structure of your controllers. Instead, your controllers should represent a collection of resources that your interface can use. The problem is that rails does so much magic, and makes so many assumptions, that sometimes it distorts the basics behind the MVC pattern.
+Your interface should not dictate the structure of your controllers. Instead, your controllers should represent a collection of resources that your interface can use (AKA an API). The problem is that rails does so much magic, and makes so many assumptions, that sometimes it distorts the basics behind the MVC pattern.
 
-This becomes very clear when you try build an interface with {Flex}[http://www.adobe.com/products/flex/]. What this forces you to do is separate your interface from your application. A flex interface communicates with your application via XML. When you finish an app with a Flex interface, you all of a sudden have a "production ready" API as well. Which feels really good. A proper API is the foundation for growing your application, once this is done the sky is the limit.
+A perfect example is using {Flex}[http://www.adobe.com/products/flex/] to build your interface. What this forces you to do is separate your interface from your application. A flex interface communicates with your application via XML. When you finish an app with a Flex interface, you all of a sudden have a "production ready" API as well. Which feels really good, because a proper API is the foundation for growing your application.
 
-That being said, why can't we accomplish the same thing with an HTML interface? For one, an HTML interface isn't as cleanly decoupled from the controllers as a Flex interface. For two, rails doesn't give us all of the tools to properly accomplish this. Instead, people create work-arounds by namespacing controllers to represent context and scope. Why not have a single controller that is <b>context aware</b>? Hence the name <b>"Contextual Development"</b>.
+That being said, why can't we accomplish the same thing with an HTML interface? For one, an HTML interface isn't as cleanly decoupled from the controllers as a Flex interface. For two, rails doesn't give us all of the tools to properly accomplish this. Instead, people create work-arounds by namespacing controllers to represent context and/or scope (Ex: Admin::Comments). Why not have a single controller that is <b>context aware</b>? Hence the name <b>"Contextual Development"</b>.
 
-This is great because now you have a single controller that <b>every</b> request for that resource must pass through. In the same manner that all database activity for a table must pass through a single model. You can feel confident adding controller specific logic to that resource without having to worry about duplicating it across multiple controllers. Ex: storing the user's IP address with a record.
+This is great because now you have a <b>single</b> controller that represents a <b>single</b> resource. This means that <b>every</b> request for that resource must pass through that single controller. Think about it, what is an API essentially? Controlled access to your database. You don't go and create an entirely new model for every scope/context you use the model, do you? Why do the same for your API? Your API resources are the "models" for anyone using it, so it doesn't make sense to have /comments and /admin/comments.
+
+To bring it all home, all requests for a resource should pass through a single controller, in the same manner that all database activity for a table must pass through a single model. You can feel confident adding controller specific logic to that resource without having to worry about duplicating it across multiple controllers. A very simple example: storing the user's IP address with a record.
 
 If it is any consolation, I am speaking from experience. I recently finished a very complex project using this method and I can say, without a doubt, it's the cleanest application I've built to date.
 
@@ -100,12 +103,12 @@ See the Feature Highlights section below for more options, and the documentation
 
 == Feature highlights
 
-I don't want to repeat what is already in the documentation, but there are a lot of really nice configuration and utility methods. Here are just a few:
+I don't want to repeat what is already in the documentation, but there are a lot of really nice configuration and utility methods. <b>Here are just a few</b>:
 
 <b>Class level methods</b>
 
   belongs_to :relationship_name   # will check to see if the resource is being scoped by a parent and give you some nifty methods for this (see below). You can call this multiple times. Just like ActiveRecord.
-  contextual_views true           # will split up your views into subfolders: comments/context1, comments/context2, and will change your default view path to the respecive folder
+  contextual_views true           # will split up your views into subfolders: comments/context1, comments/context2, and will change your default view path to the respective folder
 
 <b>Instance level methods</b>
 
@@ -130,6 +133,7 @@ I don't want to repeat what is already in the documentation, but there are a lot
   new_child_path(:child_name)             # /sibling_name/new
   child_collection_path(:child_name)      # /sibling_name
   
-All of the above can end with _url instead of _path. See docs for a complete list of available methods.
+All of the above can end with _url instead of _path. <b>See docs for a complete list of available methods.</b>
+
 
 Copyright (c) 2008 {Ben Johnson of Binary Logic}[http://www.binarylogic.com], released under the MIT license
