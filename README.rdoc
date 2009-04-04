@@ -15,15 +15,24 @@ The idea behind contextual development is simple: <b>an API should be a be a byp
 
 Your interface should not dictate the structure of your controllers. Instead, your controllers should represent a collection of resources that your interface can use (AKA an API). The problem is that rails does so much magic, and makes so many assumptions, that sometimes it distorts the basics behind the MVC pattern.
 
-A perfect example is using {Flex}[http://www.adobe.com/products/flex/] to build your interface. What this forces you to do is separate your interface from your application. A flex interface communicates with your application via XML. When you finish an app with a Flex interface, you all of a sudden have a "production ready" API as well. Which feels really good, because a proper API is the foundation for growing your application.
+A perfect example is using {Flex}[http://www.adobe.com/products/flex/] to build your interface. What this forces you to do is separate your interface from your application. A flex interface communicates with your application via XML. When you finish an app with a Flex interface, not only do you have your standard application finished, but you also have a "production ready" API. You basically completed two projects in one.
 
-That being said, why can't we accomplish the same thing with an HTML interface? For one, an HTML interface isn't as cleanly decoupled from the controllers as a Flex interface. For two, rails doesn't give us all of the tools to properly accomplish this. Instead, people create work-arounds by namespacing controllers to represent context and/or scope (Ex: Admin::Comments). Why not have a single controller that is <b>context aware</b>? Hence the name <b>"Contextual Development"</b>.
+That being said, why can't we accomplish the same thing with an HTML interface? For one, an HTML interface isn't as cleanly decoupled from the controllers as a Flex interface. For two, rails doesn't give us all of the tools to properly accomplish this. Instead, people create work-arounds by namespacing controllers to represent context and/or scope (Ex: Admin::CommentsController). Why not have a single controller that is <b>context aware</b>? Hence the name <b>"Contextual Development"</b>. So instead of an Admin namespace, you can use the context to modify the interface / scope. Example:
+
+  class CommentsController < ApplicationController
+    layout Proc.new { context == :admin ? "admin" : "application" }
+    
+    private
+      def end_of_association_chain
+        current_user.admin? ? Comment : current_user.comments
+      end
+  end
 
 This is great because now you have a <b>single</b> controller that represents a <b>single</b> resource. This means that <b>every</b> request for that resource must pass through that single controller. Think about it, what is an API essentially? Controlled access to your database. You don't go and create an entirely new model for every scope/context you use the model, do you? Why do the same for your API? Your API resources are the "models" for anyone using it, so it doesn't make sense to have /comments and /admin/comments.
 
 To bring it all home, all requests for a resource should pass through a single controller, in the same manner that all database activity for a table must pass through a single model. You can feel confident adding controller specific logic to that resource without having to worry about duplicating it across multiple controllers. A very simple example: storing the user's IP address with a record.
 
-If it is any consolation, I am speaking from experience. I recently finished a very complex project using this method and I can say, without a doubt, it's the cleanest application I've built to date.
+If it is any consolation, I am speaking from experience. I recently finished a very complex project using this development style and I can say, without a doubt, it's the cleanest application I've built to date.
 
 == Install and use
 
@@ -112,26 +121,28 @@ I don't want to repeat what is already in the documentation, but there are a lot
 
 <b>Instance level methods</b>
 
+Lets pretend we are dealing with a products resource that belongs to a category.
+
   context                                 # the name of the context you are in
   
-  object                                  # current object
-  collection                              # current collection
-  object_path                             # /comments/:id
-  new_object_path                         # /comments/new
-  collection_path                         # /comments
+  object                                  # current product object, if any
+  collection                              # current collection of products
+  object_path                             # /products/:id
+  new_object_path                         # /products/new
+  collection_path                         # /products
   
-  parent                                  # current parent object
-  parent_path                             # /parent_name/:parent_id
-  parent_collection_path                  # /parent_name
-  new_parent_path                         # /parent_name/new
+  parent                                  # current category object, if any
+  parent_path                             # /categories/:parent_id
+  parent_collection_path                  # /categories
+  new_parent_path                         # /categories/new
   
   sibling_path(sibling)                   # /sibling_name/:id
   new_sibling_path(:sibling_name)         # /sibling_name/new
   sibling_collection_path(:sibling_name)  # /sibling_name
   
-  child_path(child)                       # /sibling_name/:id
-  new_child_path(:child_name)             # /sibling_name/new
-  child_collection_path(:child_name)      # /sibling_name
+  child_path(child)                       # /products/:product_id/child_name/:id
+  new_child_path(:child_name)             # /products/:product_id/child_name/new
+  child_collection_path(:child_name)      # /products/:product_id/child_name
   
 All of the above can end with _url instead of _path. <b>See docs for a complete list of available methods.</b>
 
