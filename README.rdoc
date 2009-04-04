@@ -23,6 +23,7 @@ That being said, why can't we accomplish the same thing with an HTML interface? 
     layout Proc.new { context == :admin ? "admin" : "application" }
     
     private
+      # context is irrelevant when determining scope
       def end_of_association_chain
         current_user.admin? ? Comment : current_user.comments
       end
