@@ -27,22 +27,18 @@ module Resourcelogic
       url_fragments = extract_url_fragments(objects)
       url_objects = extract_url_objects(objects)
     
-      begin
-        if objects.first != :hash_for
-          send url_fragments.join("_"), *url_objects
-        else
-          url_params = url_objects.extract_options!
-          params = {}
-          url_objects.each_with_index do |obj, i|
-            key = i == (url_objects.size - 1) ? :id : (obj.is_a?(Array) ? "#{obj.first}_id".to_sym : "#{obj.class.name.underscore}_id".to_sym)
-            params.merge!((obj.is_a?(Array)) ? {key => obj[1].to_param} : {key => obj.to_param})
-          end
-    
-          params.merge!(url_params)
-          send url_fragments.join("_"), params
+      if objects.first != :hash_for
+        send url_fragments.join("_"), *url_objects
+      else
+        url_params = url_objects.extract_options!
+        params = {}
+        url_objects.each_with_index do |obj, i|
+          key = i == (url_objects.size - 1) ? :id : (obj.is_a?(Array) ? "#{obj.first}_id".to_sym : "#{obj.class.name.underscore}_id".to_sym)
+          params.merge!((obj.is_a?(Array)) ? {key => obj[1].to_param} : {key => obj.to_param})
         end
-      rescue NoMethodError
-        raise objects.inspect
+  
+        params.merge!(url_params)
+        send url_fragments.join("_"), params
       end
     end
   

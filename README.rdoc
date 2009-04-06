@@ -89,17 +89,7 @@ Instead of namespacing your controllers, give them context. For example, let's s
 Then in your controller use the context method to make adjustments:
 
   class CommentsController < ResourceController
-    layout :layout_by_context
-    
-    private
-      def layout_by_context
-        case context
-        when :admin
-          "admin"
-        else
-          "application"
-        end
-      end
+    layout Proc.new { context == :admin ? "admin" : "application" }
   end
 
 You also have the same context method in your views. Lastly, if you feel your views are getting cluttered you can use the contextual_views option (See Resourcelogic::Context::Config for more info). This will change your default view path to a context subfolder. Ex:
