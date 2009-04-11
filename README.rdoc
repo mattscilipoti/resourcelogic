@@ -13,9 +13,11 @@ The purpose of Resourcelogic is to support a development style I created called 
 
 The idea behind contextual development is simple: <b>an API should be a be a byproduct of good design</b>. Meaning you should never have to explicitly build an API, it should be an "accident".
 
+=== 1. No need to namespace controllers when you have context
+
 Your interface should not dictate the structure of your controllers. Instead, your controllers should represent a collection of resources that your interface can use (AKA an API). The problem is that rails does so much magic, and makes so many assumptions, that sometimes it distorts the basics behind the MVC pattern.
 
-A perfect example is using {Flex}[http://www.adobe.com/products/flex/] to build your interface. What this forces you to do is separate your interface from your application. A flex interface communicates with your application via XML. When you finish an app with a Flex interface, not only do you have your standard application finished, but you also have a "production ready" API. You basically completed two projects in one.
+A good example is using {Flex}[http://www.adobe.com/products/flex/] to build your interface. This allows you to go back to the basics behind RESTful development by forcing you to separate your interface from your application. A flex interface communicates with your application via XML. As a result, when you complete your application you also have a "production ready" API. You basically completed two projects in one.
 
 That being said, why can't we accomplish the same thing with an HTML interface? For one, an HTML interface isn't as cleanly decoupled from the controllers as a Flex interface. For two, rails doesn't give us all of the tools to properly accomplish this. Instead, people create work-arounds by namespacing controllers to represent context and/or scope (Ex: Admin::CommentsController). Why not have a single controller that is <b>context aware</b>? Hence the name <b>"Contextual Development"</b>. So instead of an Admin namespace, you can use the context to modify the interface / scope. Example:
 
@@ -29,11 +31,20 @@ That being said, why can't we accomplish the same thing with an HTML interface? 
       end
   end
 
-This is great because now you have a <b>single</b> controller that represents a <b>single</b> resource. This means that <b>every</b> request for that resource must pass through that single controller. Think about it, what is an API essentially? Controlled access to your database. You don't go and create an entirely new model for every scope/context you use the model, do you? Why do the same for your API? Your API resources are the "models" for anyone using it, so it doesn't make sense to have /comments and /admin/comments.
+=== 2. Single point of access for resources
+
+Having a <b>single</b> controller is great, because it represents a <b>single</b> resource. This means that <b>every</b> request for that resource must pass through that single controller. Think about it, what is an API essentially? Controlled access to your database. You don't go and create an entirely new model for every scope/context you use the model, do you? Why do the same for your API? Your API resources are the "models" for anyone using it, so it doesn't make sense to have /comments and /admin/comments.
 
 To bring it all home, all requests for a resource should pass through a single controller, in the same manner that all database activity for a table must pass through a single model. You can feel confident adding controller specific logic to that resource without having to worry about duplicating it across multiple controllers. A very simple example: storing the user's IP address with a record.
 
-If it is any consolation, I am speaking from experience. I recently finished a very complex project using this development style and I can say, without a doubt, it's the cleanest application I've built to date.
+=== 3. Relative URL and path methods
+
+Another big problem with using the same controller in various contexts is the need to specify relative paths instead of absolute paths. When you specify resources in your routes you get all kinds of useful <b>absolute</b> path methods, but where are the relative ones? Let's say you have the following paths:
+
+1. /articles
+2. /admin/articles
+
+Articles have many comments. What if you want to link to that article's comments? Do you use <b>article_comments_path</b> or <b>admin_article_comments_path</b>? You could use the <b>context</b> method described above to determine this, but this will get messy and annoying very fast. Instead why not use <b>child_collection_path(:comments)</b>? The paths are relative based on a tree structure. So you also get <b>parent</b> and <b>sibling</b> paths. Now you can easily nest resources without having to worry about linking to them. See the documentation for more details on the various URL and path methods that are available to you.
 
 == Install and use
 
@@ -62,7 +73,7 @@ Your ResourceController should look something like:
     acts_as_resource
   end
 
-Now all of your controllers that are "resources" can extend this controller. Why do this? So you can set your default behavior for resources in one spot. This idea what brought over from the resource_controller plugin. The syntax resource_controller came up with is pretty cool:
+Now all of your controllers that are "resources" can extend this controller. Why do this? So you can set your default behavior for resources in one spot. This idea what brought over from the resource_controller plugin. The DSL resource_controller came up with is pretty cool:
 
   class ResourceController < ApplicationController
     acts_as_resource
@@ -92,7 +103,7 @@ Then in your controller use the context method to make adjustments:
     layout Proc.new { context == :admin ? "admin" : "application" }
   end
 
-You also have the same context method in your views. Lastly, if you feel your views are getting cluttered you can use the contextual_views option (See Resourcelogic::Context::Config for more info). This will change your default view path to a context subfolder. Ex:
+You also have the same context method in your views. Lastly, if you feel your views are getting cluttered by trying to determine what context you are in, you can use the contextual_views option (See Resourcelogic::Context::Config for more info). This will change your default view path to a context subfolder. Ex:
 
   /comments
     /admin
