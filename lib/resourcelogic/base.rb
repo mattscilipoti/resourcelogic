@@ -3,11 +3,13 @@ module Resourcelogic # :nodoc:
     def self.included(klass)
       klass.class_eval do
         extend ClassMethods
+        include InstanceMethods
       end
     end
     
     module ClassMethods
       def acts_as_resource(&block)
+        resourceful(true)
         yield self if block_given?
         acts_as_resource_modules.each { |mod| include mod }
         init_default_actions
@@ -65,6 +67,25 @@ module Resourcelogic # :nodoc:
         acts_as_resource_modules
       end
       
+      def resourceful(value = nil)
+        config(:resourceful, value, false)
+      end
+      
+      def resourceful?
+        resourceful == true
+      end
+      
+      def route_alias(alias_name, model_name)
+        current_aliases = route_aliases
+        current_aliases[model_name.to_sym] ||= []
+        current_aliases[model_name.to_sym] << alias_name.to_sym
+        write_inheritable_attribute(:route_aliases, current_aliases)
+      end
+      
+      def route_aliases
+        read_inheritable_attribute(:route_aliases) || {}
+      end
+      
       private
         def acts_as_resource_modules
           key = :acts_as_resource_modules
@@ -78,6 +99,27 @@ module Resourcelogic # :nodoc:
             write_inheritable_attribute(key, value)
           end
         end
+    end
+    
+    module InstanceMethods
+      def self.included(klass)
+        klass.helper_method :resourceful?
+      end
+      
+      def model_name_from_route_alias(alias_name)
+        route_aliases.each do |model_name, aliases|
+          return model_name if aliases.include?(alias_name.to_sym)
+        end
+        nil
+      end
+      
+      def route_aliases
+        self.class.route_aliases
+      end
+      
+      def resourceful?
+        self.class.resourceful?
+      end
     end
   end
 end

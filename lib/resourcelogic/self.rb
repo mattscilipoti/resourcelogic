@@ -97,7 +97,7 @@ module Resourcelogic
         # Used internally to provide the options to smart_url from Urligence.
         #
         def collection_url_options(url_params = {})
-          namespaces + [parent_url_options, route_name.to_s.pluralize.to_sym, url_params]
+          contexts_url_parts + [route_name.to_s.pluralize.to_sym, url_params]
         end
     
         # Used internally to provide the options to smart_url from Urligence.
@@ -115,13 +115,13 @@ module Resourcelogic
             alternate_object = alternate_object_or_params
           end
           
-          [action_prefix] + namespaces + [parent_url_options, [route_name.to_sym, alternate_object || (param ? object : nil)], url_params]
+          [action_prefix] + contexts_url_parts + [[route_name.to_sym, alternate_object || (param ? object : nil)], url_params]
         end
-    
+        
         # Used internally to provide the options to smart_url from Urligence.
         #
         def new_object_url_options(url_params = {})
-          [:new] + namespaces + [parent_url_options, route_name.to_sym, url_params]
+          [:new] + contexts_url_parts + [route_name.to_sym, url_params]
         end
     end
     

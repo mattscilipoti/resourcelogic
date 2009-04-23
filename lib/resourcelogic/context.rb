@@ -21,32 +21,46 @@ module Resourcelogic
     
     module Methods
       def self.included(klass)
-        klass.helper_method :context, :contexts, :contextual_views, :contextual_views?, :context_template_name
+        klass.helper_method :context, :contexts, :contexts_url_parts, :contextual_views, :contextual_views?, :context_template_name
       end
       
       private
         def context
-          @context ||= (parent? && (parent_alias || parent_model_name)) || (contexts.last && (contexts.last.is_a?(Array) ? contexts.last.first : contexts.last))
+          @context ||= contexts.last
         end
-      
-        # Returns all of the current namespaces of the current controller, symbolized, in array form.
+        
         def contexts
-          return @contexts if @contexts
+          return @contexts if defined?(@contexts)
           path_parts = request.path.split("/")
           path_parts.shift
           @contexts = []
           path_parts.each_with_index do |part, index|
-            part = part.split(".").first if (index + 1) == path_parts.size # for formats: blah.html or blah.js
-            break if [(parent_alias || parent_model_name).to_s.pluralize, (parent_alias || parent_model_name).to_s, route_name.to_s.pluralize].include?(part.underscore)
-            if part.to_i > 0
-              @contexts << [@contexts.pop.to_s.singularize.to_sym, part]
-            else
-              @contexts << part.underscore.to_sym
-            end
+            break if route_name.to_s.pluralize == part.split(".").first.underscore
+            @contexts << (part.to_i > 0 ? @contexts.pop.to_s.singularize.to_sym : part.underscore.to_sym)
           end
           @contexts
         end
-        alias_method :namespaces, :contexts
+        
+        def contexts_url_parts
+          return @contexts_url_parts if @contexts_url_parts
+          path_parts = request.path.split("/")
+          path_parts.shift
+          @contexts_url_parts = []
+          path_parts.each_with_index do |part, index|
+            break if route_name.to_s.pluralize == part.split(".").first.underscore
+            if part.to_i > 0
+              @contexts_url_parts << [model_name_from_path_part(@contexts_url_parts.pop), part.to_i]
+            else
+              @contexts_url_parts << part.underscore.to_sym
+            end
+          end
+          @contexts_url_parts
+        end
+        
+        def model_name_from_path_part(part)
+          part = part.to_s.singularize
+          (part.classify.constantize && part.to_sym) rescue model_name_from_route_alias(part)
+        end
         
         def contextual_views?
           self.class.contextual_views?

@@ -2,7 +2,7 @@
 
 <b>Beta warning: right now this plugin is in what I like to call a "semi-beta". The only thing left to do is write documentation and add in the tests. I have already thoroughly tested this in a separate application, and am in the process of moving over the tests without having to pull over the entire rails application.</b>
 
-The purpose of Resourcelogic is to support a development style I created called <b>"Contextual Development"</b> (see contextual development below). This is an idea I've had for a while and finally decided to give it a try on one of my projects. This library spawned out of the {resource_controller plugin}[http://github.com/giraffesoft/resource_controller] by James Gollick, which is an excellent plugin. I eventually made so many changes to it that it made more sense to rewrite my own.
+The purpose of Resourcelogic is to support a development style I created called <b>"Contextual Development"</b> (see contextual development below). This is an idea I've had for a while and finally decided to give it a try on one of my projects. It worked out great, and as a result, is probably the cleanest app I've built to date. So I decided to package this idea up and release it as Resourcelogic. This library spawned out of the {resource_controller plugin}[http://github.com/giraffesoft/resource_controller] by James Gollick, which is an excellent plugin. I eventually made so many changes to it that it made more sense to rewrite my own.
 
 == Helpful links
 
@@ -11,7 +11,7 @@ The purpose of Resourcelogic is to support a development style I created called 
 
 == Contextual Development
 
-The idea behind contextual development is simple: <b>an API should be a be a byproduct of good design</b>. Meaning you should never have to explicitly build an API, it should be an "accident".
+The idea behind contextual development is simple: <b>an API should be a be a byproduct of good design</b>. Meaning you should never have to explicitly build an API. It should, in essence, be an "accident".
 
 === 1. No need to namespace controllers when you have context
 
@@ -148,5 +148,21 @@ Lets pretend we are dealing with a products resource that belongs to a category.
   
 All of the above can end with _url instead of _path. <b>See docs for a complete list of available methods.</b>
 
+== Nifty code snippets
+
+Here's a nice little breadcrumbs function I made in one of my apps. When you define an application wide pattern and organize things properly you can pull off otherwise complicated features in a simple manner:
+
+  # application_helper.rb
+  def breadcrumbs
+    return [] if !resourceful?
+    url_parts = []
+    crumbs = []
+    contexts_url_parts.each do |url_part|
+      url_parts << url_part
+      text = url_part.is_a?(Array) ? "#{url_part.first.to_s.humanize} ##{url_part.last}" : url_part.to_s.humanize
+      crumbs << link_to(text, smart_path(*url_parts))
+    end
+    crumbs
+  end
 
 Copyright (c) 2008 {Ben Johnson of Binary Logic}[http://www.binarylogic.com], released under the MIT license

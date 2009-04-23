@@ -1,33 +1,37 @@
 module Resourcelogic
   module Urligence
-    def smart_url(*objects)
-      url_params = objects.extract_options!
-      objects.push(:url)
-      objects.push(url_params)
-      urligence(*objects)
+    def self.included(klass)
+      klass.helper_method :smart_url, :smart_path, :hash_for_smart_url, :hash_for_smart_path
     end
-  
-    def smart_path(*objects)
-      url_params = objects.extract_options!
-      objects.push(:path)
-      objects.push(url_params)
-      urligence(*objects)
-    end
-  
-    def hash_for_smart_url(*objects)
-      urligence(*objects.unshift(:hash_for).push(:url).push({:type => :hash}))
-    end
-  
-    def hash_for_smart_path(*objects)
-      urligence(*objects.unshift(:hash_for).push(:path).push({:type => :hash}))
-    end
-  
-    def urligence(*objects)
-      objects = cleanup_url_objects(objects)
-      url_fragments = extract_url_fragments(objects)
-      url_objects = extract_url_objects(objects)
     
-      if objects.first != :hash_for
+    def smart_url(*url_parts)
+      url_params = url_parts.extract_options!
+      url_parts.push(:url)
+      url_parts.push(url_params)
+      urligence(*url_parts)
+    end
+  
+    def smart_path(*url_parts)
+      url_params = url_parts.extract_options!
+      url_parts.push(:path)
+      url_parts.push(url_params)
+      urligence(*url_parts)
+    end
+  
+    def hash_for_smart_url(*url_parts)
+      urligence(*url_parts.unshift(:hash_for).push(:url).push({:type => :hash}))
+    end
+  
+    def hash_for_smart_path(*url_parts)
+      urligence(*url_parts.unshift(:hash_for).push(:path).push({:type => :hash}))
+    end
+  
+    def urligence(*url_parts)
+      url_parts = cleanup_url_parts(url_parts)
+      url_fragments = extract_url_fragments(url_parts)
+      url_objects = extract_url_objects(url_parts)
+    
+      if url_parts.first != :hash_for
         send url_fragments.join("_"), *url_objects
       else
         url_params = url_objects.extract_options!
@@ -45,9 +49,10 @@ module Resourcelogic
     private
       # The point of this method is to replace any object if a url param is passed. For example:
       #
-      #   [:user, user_object], {:user_id => 4}
+      #   [:admin, [:user, user_object], {:user_id => 4}]
       #
-      # The "user_object" should be replaced by user with id 4.
+      # The "user_object" should be replaced by user with id 4, since we are explicitly saying we want to use User.find(4).
+      # The last part is the url_params.
       #
       # This also pluralizes path names if the obj is nil. Example:
       #
@@ -63,31 +68,31 @@ module Resourcelogic
       #   payments/credit_cards
       #
       # You can manage and select a credit card from the credit cards resource but a payment object
-      # is not needed.
-      def cleanup_url_objects(objects)
-        objects = objects.compact
-        url_params = objects.last.is_a?(Hash) ? objects.last : {}
-        non_symbol_object_total = objects.select { |object| !object.is_a?(Symbol) }.size - 1
+      # is not needed. In a sense you are just creating a "payments" context.
+      def cleanup_url_parts(url_parts)
+        url_parts = url_parts.compact
+        url_params = url_parts.last.is_a?(Hash) ? url_parts.last : {}
+        non_symbol_object_total = url_parts.select { |object| !object.is_a?(Symbol) }.size - 1
         non_symbol_object_count = 0
-        new_objects = []
-        objects.each do |object|
+        new_url_parts = []
+        url_parts.each do |object|
           non_symbol_object_count += 1 if !object.is_a?(Symbol)
           if !object.is_a?(Array)
-            new_objects << object
+            new_url_parts << object
           else
             klass = object.first.to_s.camelize.constantize rescue nil
             klass_name = klass ? klass.name.underscore : nil
             key = (non_symbol_object_count == non_symbol_object_total) ? :id : "#{object.first}_id".to_sym
             obj = (url_params.key?(key) ? ((!klass && url_params[key]) || (url_params[key] && klass.find(url_params.delete(key)))) : object[1])
-            new_objects << (obj.nil? ? object.first.to_s.pluralize.to_sym : [object.first, obj])
+            new_url_parts << (obj.nil? ? object.first.to_s.pluralize.to_sym : [object.first, obj])
           end
         end
-        new_objects
+        new_url_parts
       end
   
   
-      def extract_url_fragments(objects)
-        fragments = objects.collect do |obj|
+      def extract_url_fragments(url_parts)
+        fragments = url_parts.collect do |obj|
           if obj.is_a?(Symbol)
             obj
           elsif obj.is_a?(Array)
@@ -99,8 +104,8 @@ module Resourcelogic
         fragments.compact
       end
     
-      def extract_url_objects(objects)
-        objects.flatten.select { |obj| !obj.is_a?(Symbol) }
+      def extract_url_objects(url_parts)
+        url_parts.flatten.select { |obj| !obj.is_a?(Symbol) }
       end
   end
 end
