@@ -20,49 +20,13 @@ module Resourcelogic
     end
     
     module Urls
-      def self.included(klass)
-        klass.helper_method :new_parent_url, :new_parent_path, :edit_parent_url, :edit_parent_path, :parent_url, :parent_path,
-          :parent_collection_url, :parent_collection_path
-      end
-      
       private
-        def new_parent_url(url_params = {})
-          smart_url *([:new] + contexts_url_parts + [url_params])
+        def parent_url_parts(action = nil, url_params = {})
+          [action] + contexts_url_parts + [url_params]
         end
         
-        def new_parent_path(url_params = {})
-          smart_path *([:new] + contexts_url_parts + [url_params])
-        end
-        
-        def edit_parent_url(url_params = {})
-          smart_url *([:edit] + contexts_url_parts + [url_params])
-        end
-        
-        def edit_parent_path(url_params = {})
-          smart_path *([:edit] + contexts_url_parts + [url_params])
-        end
-        
-        def parent_url(url_params = {})
-          smart_url *(contexts_url_parts + [url_params])
-        end
-        
-        def parent_path(url_params = {})
-          smart_path *(contexts_url_parts + [url_params])
-        end
-        
-        def parent_collection_url(url_params = {})
-          smart_url *(parent_collection_url_parts + [url_params])
-        end
-        
-        def parent_collection_path(url_params = {})
-          smart_path *(parent_collection_url_parts + [url_params])
-        end
-        
-        def parent_collection_url_parts
-          url_parts = contexts_url_parts
-          parent_info = url_parts.pop
-          url_parts << parent_info.first.to_s.pluralize.to_sym
-          url_parts
+        def parent_collection_url_parts(action = nil, url_params = {})
+          [action] + contexts_url_parts + [url_parts.pop.first.to_s.pluralize.to_sym, url_params]
         end
     end
     
@@ -103,7 +67,7 @@ module Resourcelogic
           belongs_to.each do |model_name, options|
             request.path.split('/').reverse.each do |path_part|
               ([model_name] + (route_aliases[model_name] || [])).each_with_index do |possible_name, index|
-                if possible_name.to_s == path_part
+                if [possible_name.to_s, possible_name.to_s.pluralize].include?(path_part)
                   @parent_model_name = model_name
                   @parent_alias = index > 0 ? possible_name : nil
                   return @parent_from_path = true

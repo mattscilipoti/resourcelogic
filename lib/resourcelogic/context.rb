@@ -35,7 +35,7 @@ module Resourcelogic
           path_parts.shift
           @contexts = []
           path_parts.each_with_index do |part, index|
-            break if route_name.to_s.pluralize == part.split(".").first.underscore
+            break if model_name_from_path_part(part.split(".").first) == model_name.to_sym
             @contexts << (part.to_i > 0 ? @contexts.pop.to_s.singularize.to_sym : part.underscore.to_sym)
           end
           @contexts
@@ -47,7 +47,7 @@ module Resourcelogic
           path_parts.shift
           @contexts_url_parts = []
           path_parts.each_with_index do |part, index|
-            break if route_name.to_s.pluralize == part.split(".").first.underscore
+            break if model_name_from_path_part(part.split(".").first) == model_name.to_sym
             if part.to_i > 0
               @contexts_url_parts << [model_name_from_path_part(@contexts_url_parts.pop), part.to_i]
             else
@@ -59,7 +59,7 @@ module Resourcelogic
         
         def model_name_from_path_part(part)
           part = part.to_s.singularize
-          (part.classify.constantize && part.to_sym) rescue model_name_from_route_alias(part)
+          model_name_from_route_alias(part) || part.to_sym
         end
         
         def contextual_views?

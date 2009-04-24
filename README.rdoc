@@ -129,30 +129,44 @@ Lets pretend we are dealing with a products resource that belongs to a category.
   
   object                                  # current product object, if any
   collection                              # current collection of products
+  parent                                  # current category object, if any
+
+Now you have all of the "relative routes" to help you easily nest resources and use them in different contexts:
+  
   object_path                             # /products/:id
+  edit_object_path                        # /products/:id/edit
   new_object_path                         # /products/new
   collection_path                         # /products
   
-  parent                                  # current category object, if any
   parent_path                             # /categories/:parent_id
+  edit_parent_path                        # /categories/:parent_id/edit
   parent_collection_path                  # /categories
   new_parent_path                         # /categories/new
   
   sibling_path(sibling)                   # /sibling_name/:id
+  edit_sibling_path(sibling)              # /sibling_name/:id/edit
   new_sibling_path(:sibling_name)         # /sibling_name/new
   sibling_collection_path(:sibling_name)  # /sibling_name
   
   child_path(child)                       # /products/:product_id/child_name/:id
+  edit_child_path(child)                  # /products/:product_id/child_name/:id/edit
   new_child_path(:child_name)             # /products/:product_id/child_name/new
   child_collection_path(:child_name)      # /products/:product_id/child_name
-  
-All of the above can end with _url instead of _path. <b>See docs for a complete list of available methods.</b>
 
-== Nifty code snippets
+Notice you have the edit_* paths. The above paths are implemented in a very flexible manner. So you are not limited them, you can call your custom actions too:
 
-Here's a nice little breadcrumbs function I made in one of my apps. When you define an application wide pattern and organize things properly you can pull off otherwise complicated features in a simple manner:
+  map.resources :products, :member => [:approve], :collection => [:approve_all]
+  approve_object_path                     # /products/:id/approve
+  approve_all_collection_path             # /products/approve
 
-  # application_helper.rb
+The above example is probably not the best one, but you get the point.
+
+Lastly, all of the above can end with _url instead of _path. <b>See docs for a complete list of available methods.</b>
+
+== Why Resourcelogic is great
+
+Just to kind of get you thinking out of the box a little bit, I wrote a nice little breadcrumbs method that I am using in one of my apps:
+
   def breadcrumbs
     return [] if !resourceful?
     url_parts = []
@@ -160,9 +174,12 @@ Here's a nice little breadcrumbs function I made in one of my apps. When you def
     contexts_url_parts.each do |url_part|
       url_parts << url_part
       text = url_part.is_a?(Array) ? "#{url_part.first.to_s.humanize} ##{url_part.last}" : url_part.to_s.humanize
-      crumbs << link_to(text, smart_path(*url_parts))
+      url = url_part.is_a?(Array) ? [:edit] + url_parts : url_parts
+      crumbs << link_to(text, smart_path(*url))
     end
     crumbs
   end
+
+The point of Resourcelogic is to give you the tools you need to properly establish a pattern in your application. REST is a great pattern. The problem is that you can't use the REST pattern while still nesting resources and putting them into various contexts. Resourceloic aims to close this gap so that you can do this. Once you have a clearly defined pattern in your application, you can take advantage of it and easily do things, like the breadcrumbs example, that would otherwise clutter up your application.
 
 Copyright (c) 2008 {Ben Johnson of Binary Logic}[http://www.binarylogic.com], released under the MIT license

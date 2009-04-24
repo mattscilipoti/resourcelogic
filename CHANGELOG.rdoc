@@ -3,6 +3,7 @@
 * Cleaned up contexts method to return an array of actual contexts. In addition I also added contexts_url_parts which returns a collection of "url parts" to pass the smart_path or smart_url method. So contexts is more of a reference / utility method and contexts_url_parts is more for generating urls.
 * Added a resourceful? method to be called in shared views / layouts before calling Resourcelogic triggered methods. Helps you cleanly avoids the "undefined method" error.
 * Added route_alias configuration option so you can specify different aliases you have in your routes. You can set this in an initializer, or if all of your "resources controllers" extend a single controller you can add it in that single controller. This let's you globally specify aliases so the magic url methods work properly. You can't specify the aliases in the related controller because controllers are lazily loaded.
+* Completely rewrote the relative urls to use method_missing, which now allows you to use custom actions in your relative paths. Ex: whatever_object_path
 
 == 0.0.9
 

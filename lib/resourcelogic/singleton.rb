@@ -22,8 +22,7 @@ module Resourcelogic
     module Methods
       def self.included(klass)
         klass.class_eval do  
-          methods_to_undefine = [:index, :collection, :load_collection, :collection_url, 
-            :collection_path, :hash_for_collection_url, :hash_for_collection_path]
+          methods_to_undefine = [:index, :collection, :load_collection]
           methods_to_undefine.each { |method| undef_method(method) if method_defined?(method) }
         end
       end
@@ -53,8 +52,8 @@ module Resourcelogic
   
         # Used internally to provide the options to smart_url in a singleton controller.
         #  
-        def object_url_options(action_prefix = nil, alternate_object = nil)
-          [action_prefix] + namespaces + [parent_url_options, route_name.to_sym]
+        def object_url_parts(action = nil, alternate_object = nil)
+          [action] + contexts_url_parts + [model_name.to_sym]
         end
   
         # Builds the object, but doesn't save it, during the new, and create action.
@@ -67,6 +66,10 @@ module Resourcelogic
         #
         def singleton_build_object_base
           parent? ? parent_object : model
+        end
+        
+        def singleton?
+          self.class.singleton?
         end
     end
   end
