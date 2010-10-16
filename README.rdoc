@@ -1,3 +1,9 @@
+= Deprecated
+This is a fork of a deprecated BinaryLogic library.
+I am no longer using this library.  We use InheritedResources instead.
+
+I have not deleted this repo because I really liked the 'context' capability in ResourceLogic and I want to review it.
+
 = Resourcelogic
 
 <b>Beta warning: right now this plugin is in what I like to call a "semi-beta". The only thing left to do is write documentation and add in the tests. I have already thoroughly tested this in a separate application, and am in the process of moving over the tests without having to pull over the entire rails application.</b>
